@@ -1,0 +1,61 @@
+#Hypothesis Testing : Notes from Dataquest 
+
+""""
+Background: 
+A study where we invited 100 volunteers and split them into 2 even groups randomly to see if a pill reduce weight: 
+Group A was given a placebo, or fake, pill and instructed to consume it on a daily basis.
+Group B was given the actual weight loss pill and instructed to consume it on a daily basis.
+How do we know if the pill is effective or not? 
+"""
+
+#Data
+weight_lost_a= [3, 2, 3, 4, 3, 2, 2, 2, 1, 3, 2, 3, 1, 3, 4, 1, 3, 2, 1, 3, 4, 3, 2, 3, 7, 2, 3, 2, 5, 1, 1, 1, 3, 2, 4, 10, 2, 3, 2, 5, 6, 2, 3, 2, 3, 4, 1, 3, 3, 1]
+weight_lost_b= [5, 4, 5, 5, 4, 5, 7, 5, 4, 3, 3, 5, 10, 3, 4, 9, 7, 6, 9, 4, 2, 5, 7, 7, 7, 5, 4, 8, 9, 6, 7, 6, 7, 6, 3, 5, 5, 4, 2, 3, 3, 5, 6, 9, 7, 6, 4, 5, 4, 3]
+all_values=[3, 5, 2, 4, 3, 5, 4, 5, 3, 4, 2, 5, 2, 7, 2, 5, 1, 4, 3, 3, 2, 3, 3, 5, 1, 10, 3, 3, 4, 4, 1, 9, 3, 7, 2, 6, 1, 9, 3, 4, 4, 2, 3, 5, 2, 7, 3, 7, 7, 7, 2, 5, 3, 4, 2, 8, 5, 9, 1, 6, 1, 7, 1, 6, 3, 7, 2, 6, 4, 3, 10, 5, 2, 5, 3, 4, 2, 2, 5, 3, 6, 3, 2, 5, 3, 6, 2, 9, 3, 7, 4, 6, 1, 4, 3, 5, 3, 4, 1, 3]
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+#First, we want to know the difference in mean bewteen a and b
+mean_difference= mean_group_b- mean_group_a
+print(mean_difference) #2.52
+
+
+#Then, we need to see if this mean if any different from randomized chance
+#To create the "random situation", we conduct the permutation test:
+mean_differences = []
+for i in range(1000):
+    group_a = []
+    group_b = []
+    for value in all_values:
+        assignment_chance = np.random.rand()
+        if assignment_chance >= 0.5:
+            group_a.append(value)
+        else:
+            group_b.append(value)
+    iteration_mean_difference = np.mean(group_b) - np.mean(group_a)
+    mean_differences.append(iteration_mean_difference)
+    
+#and we can visualize this in a plot 
+plt.hist(mean_differences)
+plt.show()
+
+#Get the distribution of the permutation test(randomized):
+sampling_distribution = {}
+for df in mean_differences:
+    if sampling_distribution.get(df, False):
+        sampling_distribution[df] = sampling_distribution[df] + 1
+    else:
+        sampling_distribution[df] = 1
+
+#The we can calculate the frequncies of a mean of 2.52: 
+frequencies=[]
+for key,value in sampling_distribution.items():
+    if key>=2.52:
+        frequencies +=value
+p_value= sum(frequencies)/1000 #p_value=0 
+
+#since p value < 0.05, reject null (mean of a = mean of b); thus, significant 
+    
+
+
