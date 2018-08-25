@@ -1,15 +1,38 @@
 """
 Conducting Chi-sqaured test with Scipy
+This table contains no data/ table so can't be run; just the general rode & functions 
 """
 
+"""
+First let's look at one category test 
+"""
+
+#conducting chi-square test between observed and expected; one -variable 
 from scipy.stats import chisquare
 import numpy as np
-
-#conducting chi-square test between observed and expected 
 observed=[27816,3124,1039,311,271,32561]
 expected=[26146.5,3939.9,944.3,260.5,1269.8,32561]
 race_pvalue=chisquare_value,pvalue=chisquare(observed,expected)
 #if p value > p critial, reject H0, i.e.  the result is significnant
+
+
+"""
+Second, chi square test with multiple categories
+Notice that the expected value is calculated by python
+for example, talbe below for observed table 
+    female male total
+ A   5     10   15
+ B   8     7    15
+     13    17   30
+ Then the expected value for female- A should be :
+ 13 * (15/30)= 13*0.5=6.5
+ """
+
+#conducting chi-sqaure test; multiple variables
+import numpy as np
+from scipy.stats import chi2_contingency
+observed = np.array([[5, 5], [10, 10]])
+chisq_value, pvalue, df, expected = chi2_contingency(observed)
 
 #if given a large table and need to count the frequence of each categories myself; can use the pandas crosstab function
 import pandas
