@@ -1,7 +1,12 @@
+Dataset:
+https://www.reddit.com/r/datasets/comments/1uyd0t/200000_jeopardy_questions_in_a_json_file/
 
-# coding: utf-8
-
-# In[25]:
+"""
+The purpose is to study 
+I. how often is answer deductible from the question
+II. how often are questions repeated? 
+III. what words are associate with high_value questions
+"""
 
 
 #Import the df
@@ -9,17 +14,9 @@ import pandas as pd
 jeopardy= pd.read_csv("jeopardy.csv")
 print(jeopardy.head(5))
 
-
-# In[26]:
-
-
 #rename cols
 jeopardy=jeopardy.rename(columns={" Air Date": "Air Date", " Round":"Round", ' Category':'Category',' Value':'Value',' Question':'Question',' Answer':'Answer' })
 print(jeopardy.columns)
-
-
-# In[27]:
-
 
 #Data Cleaning: clean the string 
 import re 
@@ -32,10 +29,6 @@ jeopardy['clean_question']= jeopardy['Question'].apply(clean_str)
 #print(clean_question[:5])
 jeopardy['clean_answer']= jeopardy['Answer'].apply(clean_str)   
 #print(clean_answer[:5])
-
-
-# In[28]:
-
 
 #Data Cleaning: clean the numbers
 import re 
@@ -50,15 +43,9 @@ def clean_num(value):
 jeopardy['clean_value']=jeopardy['Value'].apply(clean_num)
 #print(clean_value[:5])
 
-
-# In[29]:
-
-
 #Data Cleaning: date col
 jeopardy['Air Date']= pd.to_datetime(jeopardy['Air Date'])
 
-
-# In[30]:
 
 
 #How often is answer deducible from question?
@@ -81,17 +68,10 @@ def answer_question_match(row):
 jeopardy['answer_in_question']= jeopardy.apply(answer_question_match, axis=1)
 #print(answer_in_question[:10])
    
-    
-
-
-# In[31]:
-
-
 #avg. ratio of answer word in question/ all words in answer
 print(jeopardy['answer_in_question'].mean())
 
 
-# In[32]:
 
 
 #How often are new questions repaets of older ones?
@@ -122,9 +102,7 @@ print(jeopardy['question_overlap'].mean())
 
 
 
-# In[35]:
-
-
+#What words are associated with high value question? 
 def get_value (row):
     if row['clean_value']>800:
         value=1
@@ -139,12 +117,6 @@ jeopardy['high_value']=jeopardy.apply(get_value, axis=1)
 #import numpy as np
 #unique_elements, counts_elements = np.unique(a, return_counts=True)
 #print (unique_elements,counts_elements)
-
-
-
-
-# In[50]:
-
 
 #a function to find count for high_value / low_value for each word
 def word_value (word):
@@ -167,10 +139,6 @@ for word in comparison_terms:
 
 print(comparison_terms)
 print(observed_expected)
-
-
-# In[83]:
-
 
 #compute expected counts 
 #print(jeopardy.shape[0]) #num of rows=1999
