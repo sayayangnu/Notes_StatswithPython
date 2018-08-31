@@ -1,0 +1,204 @@
+
+# coding: utf-8
+
+# In[25]:
+
+
+#Import the df
+import pandas as pd
+jeopardy= pd.read_csv("jeopardy.csv")
+print(jeopardy.head(5))
+
+
+# In[26]:
+
+
+#rename cols
+jeopardy=jeopardy.rename(columns={" Air Date": "Air Date", " Round":"Round", ' Category':'Category',' Value':'Value',' Question':'Question',' Answer':'Answer' })
+print(jeopardy.columns)
+
+
+# In[27]:
+
+
+#Data Cleaning: clean the string 
+import re 
+def clean_str(text):
+    text=text.lower()
+    text=re.sub('[^a-zA-Z0-9\s]',"",text)
+    return(text)
+
+jeopardy['clean_question']= jeopardy['Question'].apply(clean_str)   
+#print(clean_question[:5])
+jeopardy['clean_answer']= jeopardy['Answer'].apply(clean_str)   
+#print(clean_answer[:5])
+
+
+# In[28]:
+
+
+#Data Cleaning: clean the numbers
+import re 
+def clean_num(value):
+    value=re.sub('[^a-zA-Z0-9\s]',"",value)
+    try:
+        value=int(value)
+    except Exception:
+        value=0
+    return value
+
+jeopardy['clean_value']=jeopardy['Value'].apply(clean_num)
+#print(clean_value[:5])
+
+
+# In[29]:
+
+
+#Data Cleaning: date col
+jeopardy['Air Date']= pd.to_datetime(jeopardy['Air Date'])
+
+
+# In[30]:
+
+
+#How often is answer deducible from question?
+def answer_question_match(row):
+    match_count=0
+    question=row['clean_question']
+    answer=row['clean_answer']
+    split_question=question.split(' ')
+    split_answer=answer.split(' ')
+    if "the" in split_answer:
+        split_answer.remove("the")
+    if len(split_answer)==0:
+        return 0
+    for word in split_answer:
+        if word in split_question:
+            match_count +=1
+    match_ratio=match_count/len(split_answer)
+    return (match_ratio)
+    
+jeopardy['answer_in_question']= jeopardy.apply(answer_question_match, axis=1)
+#print(answer_in_question[:10])
+   
+    
+
+
+# In[31]:
+
+
+#avg. ratio of answer word in question/ all words in answer
+print(jeopardy['answer_in_question'].mean())
+
+
+# In[32]:
+
+
+#How often are new questions repaets of older ones?
+question_overlap=[]
+terms_used={}
+terms_used=set()
+for i, row in jeopardy.iterrows():
+    #split the question into words
+    split_question=row['clean_question'].split(" ")
+    #IMPORTANT: remove words with len<6
+    split_question = [q for q in split_question if len(q) > 5]
+    match_count=0
+    for word in split_question:
+        if word in terms_used:
+            match_count +=1
+    for word in split_question:
+        terms_used.add(word)
+    if len(split_question)>0:
+        match_count /= len(split_question)
+    question_overlap.append(match_count)
+
+#print(question_overlap[:5])
+jeopardy['question_overlap']=question_overlap
+print(jeopardy['question_overlap'].mean())
+#0.6908737315671962
+
+#This means that the ratio of used words to len of question is around 88%
+
+
+
+# In[35]:
+
+
+def get_value (row):
+    if row['clean_value']>800:
+        value=1
+    else:
+        value=0
+    return value
+
+#if the question is high value, high_value=1; otherwise 0
+jeopardy['high_value']=jeopardy.apply(get_value, axis=1)
+
+#checking if the above makes sense
+#import numpy as np
+#unique_elements, counts_elements = np.unique(a, return_counts=True)
+#print (unique_elements,counts_elements)
+
+
+
+
+# In[50]:
+
+
+#a function to find count for high_value / low_value for each word
+def word_value (word):
+    low_count=0
+    high_count=0
+    for i,row in jeopardy.iterrows():
+        split_question=row['clean_question'].split(" ")
+        if word in split_question:
+            if row['high_value']==1:
+                high_count +=1
+            else:
+                low_count +=1
+    return high_count, low_count
+
+observed_expected=[]
+comparison_terms=list(terms_used)[:5]
+
+for word in comparison_terms:
+    observed_expected.append(word_value(word))
+
+print(comparison_terms)
+print(observed_expected)
+
+
+# In[83]:
+
+
+#compute expected counts 
+#print(jeopardy.shape[0]) #num of rows=1999
+#print(jeopardy.shape[1]) #num of cols = 14
+#high_value_count = len(jeopardy)
+high_value_count=len(jeopardy[jeopardy['high_value']==1]) #5734
+low_value_count= len(jeopardy[jeopardy['high_value']==0]) #14265
+#get the expected proportion for high and low value
+high_prop= high_value_count / len(jeopardy)
+low_prop = low_value_count / len(jeopardy)
+#find the expected high/ low value for each word
+def get_expected(count):
+    total=count[0]+count[1]
+    high_expected= total * high_prop
+    low_expected = total * low_prop
+    return high_expected, low_expected 
+
+expected_count=[]
+for count in observed_expected:
+    expected_count.append(get_expected(count))
+
+##find chi_squared : is this variation due to random chance? 
+from scipy.stats import chisquare
+import numpy as np
+observed=observed_expected
+expected=expected_count
+chisquare_value,pvalue=chisquare(observed,expected)
+print(chisquare_value,pvalue)
+#not different from random chance 
+    
+
